@@ -552,6 +552,17 @@ document.getElementById("auth-sw").onclick=()=>setMode("register");
 document.getElementById("auth-btn").onclick=doAuth;
 ["inp-u","inp-p","inp-c"].forEach(id=>document.getElementById(id).addEventListener("keydown",e=>{if(e.key==="Enter")doAuth();}));
 
+// ── Auto-login from saved session ─────────────────────
+(async()=>{
+  const saved=localStorage.getItem("lchat_user");
+  if(!saved)return;
+  try{
+    const snap=await get(ref(db,`users/${saved}`));
+    if(snap.exists()) startApp(snap.val());
+    else localStorage.removeItem("lchat_user");
+  }catch(e){localStorage.removeItem("lchat_user");}
+})();
+
 async function doAuth(){
   const username=document.getElementById("inp-u").value.trim().replace(/[^a-zA-Z0-9_]/g,"");
   const password=document.getElementById("inp-p").value;
@@ -570,11 +581,13 @@ async function doAuth(){
       if(password!==confirm)return showErr("Passwords do not match");
       const u={username,password:hashPw(password),avatar:"",displayName:"",bio:"",createdAt:Date.now()};
       await set(ref(db,`users/${username}`),u);
+      localStorage.setItem("lchat_user",username);
       startApp(u);
     }else{
       if(!snap.exists())return showErr("Account not found");
       const u=snap.val();
       if(u.password!==hashPw(password))return showErr("Wrong password");
+      localStorage.setItem("lchat_user",username);
       startApp(u);
     }
   }catch(e){showErr("Firebase error. Check your database rules.");console.error(e);}
@@ -984,6 +997,7 @@ document.getElementById("save-pw-btn").onclick=async()=>{
 };
 
 async function doLogout(){
+  localStorage.removeItem("lchat_user");
   await remove(ref(db,`presence/${ME.username}`));
   location.reload();
 }
