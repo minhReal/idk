@@ -1,23 +1,24 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VietChat</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; font-size: 14px; background: #1e1f22; color: #dcddde; height: 100vh; display: flex; align-items: center; justify-content: center; }
+  body { font-family: Arial, sans-serif; font-size: 14px; background: #1e1f22; color: #dcddde; height: 100vh; overflow: hidden; }
 
   /* AUTH */
-  #auth-screen { background: #2b2d31; border: 1px solid #1a1b1e; border-radius: 8px; padding: 32px; width: 340px; box-shadow: 0 8px 32px rgba(0,0,0,.5); }
-  #auth-screen h2 { text-align: center; margin-bottom: 6px; font-size: 22px; color: #fff; }
-  #auth-screen p { text-align: center; color: #949ba4; font-size: 13px; margin-bottom: 24px; }
+  #auth-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #1e1f22; z-index: 10; }
+  #auth-box { background: #2b2d31; border: 1px solid #1a1b1e; border-radius: 8px; padding: 32px; width: 340px; box-shadow: 0 8px 32px rgba(0,0,0,.5); }
+  #auth-box h2 { text-align: center; margin-bottom: 6px; font-size: 22px; color: #fff; }
+  #auth-box p { text-align: center; color: #949ba4; font-size: 13px; margin-bottom: 24px; }
   .field { margin-bottom: 14px; }
   .field label { display: block; margin-bottom: 5px; color: #b5bac1; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; }
   .field input { width: 100%; padding: 9px 11px; background: #1e1f22; border: 1px solid #111214; border-radius: 4px; font-size: 14px; color: #dcddde; outline: none; }
   .field input:focus { border-color: #5865f2; }
   .field input::placeholder { color: #4e5058; }
-  .btn { width: 100%; padding: 10px; background: #5865f2; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; }
+  .btn { width: 100%; padding: 10px; background: #5865f2; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; margin-top: 4px; }
   .btn:hover { background: #4752c4; }
   .btn:disabled { background: #3c3f45; color: #6d6f78; cursor: not-allowed; }
   .err { color: #f38ba8; font-size: 13px; margin-bottom: 12px; text-align: center; background: rgba(243,139,168,.1); padding: 8px; border-radius: 4px; }
@@ -26,8 +27,7 @@
   #auth-toggle span:hover { text-decoration: underline; }
 
   /* APP */
-  #app { display: none; width: 100vw; height: 100vh; }
-  #layout { display: flex; height: 100%; }
+  #app { display: none; width: 100vw; height: 100vh; flex-direction: row; }
 
   /* Sidebar */
   #sidebar { width: 240px; background: #2b2d31; display: flex; flex-direction: column; flex-shrink: 0; }
@@ -39,6 +39,7 @@
   .ch-item.active { background: rgba(255,255,255,.1); color: #fff; }
   .ch-hash { font-size: 18px; font-weight: bold; color: #6d6f78; line-height: 1; }
   .ch-item.active .ch-hash { color: #dcddde; }
+
   #member-list { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
   #member-list::-webkit-scrollbar { width: 4px; }
   #member-list::-webkit-scrollbar-thumb { background: #1e1f22; border-radius: 4px; }
@@ -81,7 +82,7 @@
   .msg-row { padding: 2px 16px; display: flex; gap: 14px; align-items: flex-start; }
   .msg-row:hover { background: rgba(0,0,0,.06); }
   .msg-row.newgroup { padding-top: 16px; }
-  .ava { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: #4e5058; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: #fff; overflow: hidden; cursor: default; }
+  .ava { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: #4e5058; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: #fff; overflow: hidden; }
   .ava img { width: 100%; height: 100%; object-fit: cover; }
   .ava-gap { width: 36px; flex-shrink: 0; }
   .msg-body { flex: 1; min-width: 0; }
@@ -157,86 +158,95 @@
 
 <!-- AUTH -->
 <div id="auth-screen">
-  <h2>💬 VietChat</h2>
-  <p id="auth-sub">Đăng nhập để tiếp tục</p>
-  <div id="auth-err" class="err" style="display:none"></div>
-  <div class="field"><label>Tên người dùng</label><input id="inp-user" maxlength="20" placeholder="chỉ gồm chữ, số, _" autocomplete="off"></div>
-  <div class="field"><label>Mật khẩu</label><input id="inp-pass" type="password" placeholder="Tối thiểu 4 ký tự"></div>
-  <div class="field" id="field-confirm" style="display:none"><label>Nhập lại mật khẩu</label><input id="inp-confirm" type="password"></div>
-  <button class="btn" id="auth-btn">Đăng nhập</button>
-  <div id="auth-toggle">Chưa có tài khoản? <span id="auth-switch">Đăng ký ngay</span></div>
+  <div id="auth-box">
+    <h2>💬 VietChat</h2>
+    <p id="auth-sub">Sign in to continue</p>
+    <div id="auth-err" class="err" style="display:none"></div>
+    <div class="field">
+      <label>Username</label>
+      <input id="inp-user" maxlength="20" placeholder="letters, numbers, _ only" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="inp-pass" type="password" placeholder="At least 4 characters">
+    </div>
+    <div class="field" id="field-confirm" style="display:none">
+      <label>Confirm Password</label>
+      <input id="inp-confirm" type="password">
+    </div>
+    <button class="btn" id="auth-btn">Log In</button>
+    <div id="auth-toggle">Don't have an account? <span id="auth-switch">Sign up</span></div>
+  </div>
 </div>
 
 <!-- APP -->
 <div id="app">
-  <div id="layout">
-    <!-- Sidebar -->
-    <div id="sidebar">
-      <div id="server-name">💬 VietChat</div>
-      <div id="channel-list">
-        <div class="ch-label">Kênh văn bản</div>
-        <div class="ch-item active" data-ch="general"><span class="ch-hash">#</span>general</div>
-        <div class="ch-item" data-ch="random"><span class="ch-hash">#</span>random</div>
-        <div class="ch-item" data-ch="off-topic"><span class="ch-hash">#</span>off-topic</div>
-      </div>
-      <div id="member-list"></div>
-      <div id="user-bar">
-        <div class="ava" id="my-ava" style="cursor:pointer" title="Chỉnh hồ sơ"></div>
-        <div id="ubar-info">
-          <div id="ubar-name"></div>
-          <div id="ubar-sub">Online ●</div>
-        </div>
-        <button class="ibtn" id="notif-btn" title="Thông báo">🔔<span class="badge" id="notif-badge" style="display:none">0</span></button>
-        <button class="ibtn" id="prof-btn" title="Hồ sơ">⚙️</button>
-        <button class="ibtn" id="logout-btn" title="Đăng xuất">🚪</button>
-      </div>
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="server-name">💬 VietChat</div>
+    <div id="channel-list">
+      <div class="ch-label">Text Channels</div>
+      <div class="ch-item active" data-ch="general"><span class="ch-hash">#</span>general</div>
+      <div class="ch-item" data-ch="random"><span class="ch-hash">#</span>random</div>
+      <div class="ch-item" data-ch="off-topic"><span class="ch-hash">#</span>off-topic</div>
     </div>
+    <div id="member-list"></div>
+    <div id="user-bar">
+      <div class="ava" id="my-ava" style="cursor:pointer" title="Edit profile"></div>
+      <div id="ubar-info">
+        <div id="ubar-name"></div>
+        <div id="ubar-sub">Online</div>
+      </div>
+      <button class="ibtn" id="notif-btn" title="Notifications">🔔<span class="badge" id="notif-badge" style="display:none">0</span></button>
+      <button class="ibtn" id="prof-btn" title="Edit Profile">⚙️</button>
+      <button class="ibtn" id="logout-btn" title="Log out">🚪</button>
+    </div>
+  </div>
 
-    <!-- Chat -->
-    <div id="chat-area">
-      <div id="chat-header">
-        <span id="hdr-hash" class="ch-hash">#</span>
-        <span id="hdr-name">general</span>
-        <span id="hdr-hint">Gõ @tên để ping ai đó</span>
+  <!-- Chat -->
+  <div id="chat-area">
+    <div id="chat-header">
+      <span id="hdr-hash" class="ch-hash">#</span>
+      <span id="hdr-name">general</span>
+      <span id="hdr-hint">Type @username to ping someone</span>
+    </div>
+    <div id="messages"></div>
+    <div id="input-area">
+      <div id="men-dd"></div>
+      <div class="input-wrap">
+        <textarea id="msg-input" rows="1" placeholder="Message #general"></textarea>
+        <button id="send-btn" title="Send (Enter)">➤</button>
       </div>
-      <div id="messages"></div>
-      <div id="input-area">
-        <div id="men-dd"></div>
-        <div class="input-wrap">
-          <textarea id="msg-input" rows="1" placeholder="Nhắn tin vào #general"></textarea>
-          <button id="send-btn" title="Gửi (Enter)">➤</button>
-        </div>
-        <div class="input-hint">Enter gửi &nbsp;·&nbsp; Shift+Enter xuống dòng</div>
-      </div>
+      <div class="input-hint">Enter to send &nbsp;·&nbsp; Shift+Enter for new line</div>
     </div>
   </div>
 </div>
 
 <!-- Notif panel -->
 <div id="notif-panel">
-  <h4>Thông báo</h4>
+  <h4>Notifications</h4>
   <div id="notif-list"></div>
 </div>
 
 <!-- Profile modal -->
 <div id="prof-modal">
   <div id="prof-box">
-    <div class="mhdr"><h3>Chỉnh sửa hồ sơ</h3></div>
+    <div class="mhdr"><h3>Edit Profile</h3></div>
     <div class="mbody">
       <div class="ava-section">
-        <div class="ava" id="big-ava" title="Click để đổi ảnh"></div>
+        <div class="ava" id="big-ava" title="Click to change avatar"></div>
         <div class="ava-actions">
-          <button id="pick-ava">📁 Chọn ảnh</button>
-          <button class="del" id="del-ava" style="display:none">✕ Xóa ảnh</button>
+          <button id="pick-ava">📁 Choose Image</button>
+          <button class="del" id="del-ava" style="display:none">✕ Remove</button>
         </div>
         <input id="ava-file" type="file" accept="image/*" style="display:none">
       </div>
-      <div class="mfield"><label>Tên người dùng</label><input id="prof-uname" disabled></div>
-      <div class="mfield"><label>Giới thiệu bản thân</label><textarea id="prof-bio" maxlength="120" placeholder="Viết vài dòng về bạn..."></textarea></div>
+      <div class="mfield"><label>Username</label><input id="prof-uname" disabled></div>
+      <div class="mfield"><label>Bio</label><textarea id="prof-bio" maxlength="120" placeholder="Say something about yourself..."></textarea></div>
     </div>
     <div class="mftr">
-      <button class="ccl" id="prof-cancel">Hủy</button>
-      <button class="sav" id="prof-save">Lưu thay đổi</button>
+      <button class="ccl" id="prof-cancel">Cancel</button>
+      <button class="sav" id="prof-save">Save Changes</button>
     </div>
   </div>
 </div>
@@ -259,149 +269,155 @@ const firebaseConfig = {
   appId: "1:504151895904:web:f04d45afb61b29f3bfb805",
   measurementId: "G-GM9BZBQJ3L"
 };
+
 const fbApp = initializeApp(firebaseConfig);
 const db    = getDatabase(fbApp);
 
-// ── State ──────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────
 let me = null, curCh = "general", allUsers = {}, lastCount = 0, unsubMsgs = null;
 let newAvaData = null, removeAvaFlag = false;
 
 const PALETTE = ["#5865f2","#eb459e","#3ba55d","#faa61a","#ed4245","#00b0f4","#9b59b6","#1abc9c"];
 
-// ── Helpers ────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────
 function avaColor(n) {
   let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) | 0;
   return PALETTE[Math.abs(h) % PALETTE.length];
 }
-function mkAva(user, el, size) {
-  if (size) { el.style.width = size + "px"; el.style.height = size + "px"; el.style.fontSize = (size * .38) + "px"; }
-  const u = user || { username: "?" };
+function applyAva(user, el, size) {
+  if (size) { el.style.width=size+"px"; el.style.height=size+"px"; el.style.fontSize=(size*.38)+"px"; }
+  const u = user || { username:"?" };
   if (u.avatar) {
-    el.style.background = "#232428";
-    el.innerHTML = `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover">`;
+    el.style.background="#232428";
+    el.innerHTML=`<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover">`;
   } else {
-    el.style.background = avaColor(u.username);
-    el.innerHTML = u.username[0].toUpperCase();
+    el.style.background=avaColor(u.username);
+    el.innerHTML=u.username[0].toUpperCase();
   }
 }
-function avaHtml(user, size = 36) {
-  const u = user || { username: "?" };
-  const s = `width:${size}px;height:${size}px;font-size:${size*.38}px`;
+function avaHtml(user, size=36) {
+  const u = user||{username:"?"};
+  const s=`width:${size}px;height:${size}px;font-size:${size*.38}px`;
   if (u.avatar) return `<div class="ava" style="${s};background:#232428"><img src="${u.avatar}"></div>`;
   return `<div class="ava" style="${s};background:${avaColor(u.username)}">${u.username[0].toUpperCase()}</div>`;
 }
-function fmtT(ts) { return new Date(ts).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}); }
-function fmtD(ts) {
-  const d = new Date(ts), n = new Date();
-  if (d.toDateString()===n.toDateString()) return "Hôm nay";
-  const y = new Date(n); y.setDate(n.getDate()-1);
-  if (d.toDateString()===y.toDateString()) return "Hôm qua";
-  return d.toLocaleDateString("vi-VN");
+function fmtT(ts){ return new Date(ts).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}); }
+function fmtD(ts){
+  const d=new Date(ts),n=new Date();
+  if(d.toDateString()===n.toDateString()) return "Today";
+  const y=new Date(n); y.setDate(n.getDate()-1);
+  if(d.toDateString()===y.toDateString()) return "Yesterday";
+  return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
 }
-function esc(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function renderText(txt, myName) {
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function renderText(txt,myName){
   return esc(txt).replace(/@([a-zA-Z0-9_]+)/g,
-    (_,n) => `<span class="ping${n===myName?" mine":""}" >@${n}</span>`);
+    (_,n)=>`<span class="ping${n===myName?" mine":""}">@${n}</span>`);
 }
-function toast(msg, type = "") {
-  const el = document.createElement("div");
-  el.className = "toast " + type; el.textContent = msg;
+function toast(msg,type=""){
+  const el=document.createElement("div");
+  el.className="toast "+type; el.textContent=msg;
   document.getElementById("toasts").appendChild(el);
-  setTimeout(() => el.remove(), 4200);
+  setTimeout(()=>el.remove(),4200);
 }
-function hashPw(s) {
-  let h = 5381;
-  for (let i=0;i<s.length;i++) h=((h<<5)+h)+s.charCodeAt(i);
+function hashPw(s){
+  let h=5381;
+  for(let i=0;i<s.length;i++) h=((h<<5)+h)+s.charCodeAt(i);
   return (h>>>0).toString(16);
 }
 
-// ── Auth ───────────────────────────────────────────────
-let authMode = "login";
-function setMode(m) {
-  authMode = m;
-  document.getElementById("auth-btn").textContent    = m==="login" ? "Đăng nhập" : "Đăng ký";
-  document.getElementById("auth-sub").textContent    = m==="login" ? "Đăng nhập để tiếp tục" : "Tạo tài khoản mới";
-  document.getElementById("field-confirm").style.display = m==="register" ? "" : "none";
-  document.getElementById("auth-toggle").innerHTML   = m==="login"
-    ? `Chưa có tài khoản? <span id="auth-switch">Đăng ký ngay</span>`
-    : `Đã có tài khoản? <span id="auth-switch">Đăng nhập</span>`;
-  document.getElementById("auth-switch").onclick = () => setMode(m==="login"?"register":"login");
-  document.getElementById("auth-err").style.display  = "none";
+// ── Auth ──────────────────────────────────────────────
+let authMode="login";
+
+function setMode(m){
+  authMode=m;
+  document.getElementById("auth-btn").textContent   = m==="login"?"Log In":"Sign Up";
+  document.getElementById("auth-sub").textContent   = m==="login"?"Sign in to continue":"Create a new account";
+  document.getElementById("field-confirm").style.display = m==="register"?"":"none";
+  document.getElementById("auth-toggle").innerHTML  = m==="login"
+    ? `Don't have an account? <span id="auth-switch">Sign up</span>`
+    : `Already have an account? <span id="auth-switch">Log in</span>`;
+  document.getElementById("auth-switch").onclick = ()=>setMode(m==="login"?"register":"login");
+  document.getElementById("auth-err").style.display="none";
 }
-document.getElementById("auth-switch").onclick = () => setMode("register");
-document.getElementById("auth-btn").onclick    = doAuth;
-["inp-user","inp-pass","inp-confirm"].forEach(id =>
-  document.getElementById(id).addEventListener("keydown", e => { if(e.key==="Enter") doAuth(); }));
+document.getElementById("auth-switch").onclick=()=>setMode("register");
+document.getElementById("auth-btn").onclick=doAuth;
+["inp-user","inp-pass","inp-confirm"].forEach(id=>
+  document.getElementById(id).addEventListener("keydown",e=>{ if(e.key==="Enter") doAuth(); }));
 
-async function doAuth() {
-  const username = document.getElementById("inp-user").value.trim().replace(/[^a-zA-Z0-9_]/g,"");
-  const password = document.getElementById("inp-pass").value;
-  const confirm  = document.getElementById("inp-confirm").value;
-  const errEl    = document.getElementById("auth-err");
+async function doAuth(){
+  const username=document.getElementById("inp-user").value.trim().replace(/[^a-zA-Z0-9_]/g,"");
+  const password=document.getElementById("inp-pass").value;
+  const confirm =document.getElementById("inp-confirm").value;
+  const errEl   =document.getElementById("auth-err");
 
-  function showErr(msg) {
-    errEl.textContent = msg; errEl.style.display = "";
-    document.getElementById("auth-btn").disabled = false;
-    document.getElementById("auth-btn").textContent = authMode==="login" ? "Đăng nhập" : "Đăng ký";
+  function showErr(msg){
+    errEl.textContent=msg; errEl.style.display="";
+    document.getElementById("auth-btn").disabled=false;
+    document.getElementById("auth-btn").textContent=authMode==="login"?"Log In":"Sign Up";
   }
-  if (!username || username.length < 3) return showErr("Tên tối thiểu 3 ký tự (chỉ gồm chữ, số, _)");
-  if (!password || password.length < 4) return showErr("Mật khẩu tối thiểu 4 ký tự");
 
-  document.getElementById("auth-btn").disabled = true;
-  document.getElementById("auth-btn").textContent = "Đang xử lý...";
-  errEl.style.display = "none";
+  if(!username||username.length<3) return showErr("Username must be at least 3 characters");
+  if(!password||password.length<4) return showErr("Password must be at least 4 characters");
+
+  document.getElementById("auth-btn").disabled=true;
+  document.getElementById("auth-btn").textContent="Loading...";
+  errEl.style.display="none";
 
   try {
-    const snap = await get(ref(db, `users/${username}`));
-    if (authMode === "register") {
-      if (snap.exists()) return showErr("Tên người dùng đã tồn tại");
-      if (password !== confirm) return showErr("Mật khẩu không khớp");
-      const u = { username, password: hashPw(password), avatar: "", bio: "", createdAt: Date.now() };
-      await set(ref(db, `users/${username}`), u);
+    const snap=await get(ref(db,`users/${username}`));
+    if(authMode==="register"){
+      if(snap.exists()) return showErr("Username already taken");
+      if(password!==confirm) return showErr("Passwords do not match");
+      const u={ username, password:hashPw(password), avatar:"", bio:"", createdAt:Date.now() };
+      await set(ref(db,`users/${username}`),u);
       startApp(u);
     } else {
-      if (!snap.exists()) return showErr("Tài khoản không tồn tại");
-      const u = snap.val();
-      if (u.password !== hashPw(password)) return showErr("Sai mật khẩu");
+      if(!snap.exists()) return showErr("Account not found");
+      const u=snap.val();
+      if(u.password!==hashPw(password)) return showErr("Wrong password");
       startApp(u);
     }
   } catch(e) {
-    showErr("Lỗi kết nối Firebase. Kiểm tra Realtime Database Rules (cho phép read/write).");
+    showErr("Firebase connection error. Check your Realtime Database Rules.");
     console.error(e);
   }
 }
 
-// ── Start App ──────────────────────────────────────────
-function startApp(user) {
-  me = user;
-  document.getElementById("auth-screen").style.display = "none";
-  document.getElementById("app").style.display = "";
-  document.getElementById("ubar-name").textContent = me.username;
-  refreshMyAva();
+// ── Start App ─────────────────────────────────────────
+function startApp(user){
+  me=user;
+
+  // Hide auth, show app  ← THE FIX: must set display to "flex" not ""
+  document.getElementById("auth-screen").style.display="none";
+  document.getElementById("app").style.display="flex";
+
+  document.getElementById("ubar-name").textContent=me.username;
+  applyAva(me, document.getElementById("my-ava"), 32);
 
   // Presence
-  const presRef = ref(db, `presence/${me.username}`);
-  set(presRef, { online: true, ts: Date.now() });
+  const presRef=ref(db,`presence/${me.username}`);
+  set(presRef,{online:true,ts:Date.now()});
   onDisconnect(presRef).remove();
 
   // Watch users
-  onValue(ref(db, "users"), snap => {
-    allUsers = {}; snap.forEach(c => { allUsers[c.key] = c.val(); });
-    refreshMyAva();
+  onValue(ref(db,"users"),snap=>{
+    allUsers={}; snap.forEach(c=>{ allUsers[c.key]=c.val(); });
+    applyAva(allUsers[me.username]||me, document.getElementById("my-ava"), 32);
   });
 
-  // Watch presence
-  onValue(ref(db, "presence"), renderMembers);
+  // Watch presence → render members
+  onValue(ref(db,"presence"),renderMembers);
 
-  // Channel clicks
-  document.querySelectorAll(".ch-item").forEach(el => {
-    el.onclick = () => {
+  // Channel switching
+  document.querySelectorAll(".ch-item").forEach(el=>{
+    el.onclick=()=>{
       document.querySelectorAll(".ch-item").forEach(x=>x.classList.remove("active"));
       el.classList.add("active");
-      curCh = el.dataset.ch;
-      document.getElementById("hdr-name").textContent = curCh;
-      document.getElementById("msg-input").placeholder = `Nhắn tin vào #${curCh}`;
-      lastCount = 0;
+      curCh=el.dataset.ch;
+      document.getElementById("hdr-name").textContent=curCh;
+      document.getElementById("msg-input").placeholder=`Message #${curCh}`;
+      lastCount=0;
       listenMessages();
     };
   });
@@ -410,118 +426,113 @@ function startApp(user) {
   listenNotifs();
 }
 
-function refreshMyAva() {
-  mkAva(allUsers[me.username] || me, document.getElementById("my-ava"), 32);
-}
-
-// ── Members ────────────────────────────────────────────
-function renderMembers(presSnap) {
-  const onSet = new Set();
-  if (presSnap) presSnap.forEach(c => { if(c.val()?.online) onSet.add(c.key); });
-  const all = Object.keys(allUsers);
-  const online  = all.filter(n => onSet.has(n));
-  const offline = all.filter(n => !onSet.has(n));
-  let html = "";
-  if (online.length) {
-    html += `<div class="mem-label">Online — ${online.length}</div>`;
-    online.forEach(n => {
-      const u = allUsers[n]||{username:n};
-      html += `<div class="mem-item">${avaHtml(u,26)}<div class="sdot on"></div><span class="mem-name${n===me.username?" is-me":""}">${n}${n===me.username?" (bạn)":""}</span></div>`;
+// ── Members sidebar ───────────────────────────────────
+function renderMembers(presSnap){
+  const onSet=new Set();
+  if(presSnap) presSnap.forEach(c=>{ if(c.val()?.online) onSet.add(c.key); });
+  const all=Object.keys(allUsers);
+  const online =all.filter(n=>onSet.has(n));
+  const offline=all.filter(n=>!onSet.has(n));
+  let html="";
+  if(online.length){
+    html+=`<div class="mem-label">Online — ${online.length}</div>`;
+    online.forEach(n=>{
+      const u=allUsers[n]||{username:n};
+      html+=`<div class="mem-item">${avaHtml(u,26)}<div class="sdot on"></div><span class="mem-name${n===me.username?" is-me":""}">${n}${n===me.username?" (you)":""}</span></div>`;
     });
   }
-  if (offline.length) {
-    html += `<div class="mem-label">Offline — ${offline.length}</div>`;
-    offline.forEach(n => {
-      const u = allUsers[n]||{username:n};
-      html += `<div class="mem-item offline">${avaHtml(u,26)}<div class="sdot off"></div><span class="mem-name">${n}</span></div>`;
+  if(offline.length){
+    html+=`<div class="mem-label">Offline — ${offline.length}</div>`;
+    offline.forEach(n=>{
+      const u=allUsers[n]||{username:n};
+      html+=`<div class="mem-item offline">${avaHtml(u,26)}<div class="sdot off"></div><span class="mem-name">${n}</span></div>`;
     });
   }
-  document.getElementById("member-list").innerHTML = html;
+  document.getElementById("member-list").innerHTML=html;
 }
 
-// ── Messages ───────────────────────────────────────────
-function listenMessages() {
-  if (unsubMsgs) unsubMsgs();
-  document.getElementById("messages").innerHTML = "";
-  unsubMsgs = onValue(ref(db, `messages/${curCh}`), snap => {
-    const msgs = [];
-    snap.forEach(c => msgs.push({ id: c.key, ...c.val() }));
+// ── Messages ──────────────────────────────────────────
+function listenMessages(){
+  if(unsubMsgs) unsubMsgs();
+  document.getElementById("messages").innerHTML="";
+  unsubMsgs=onValue(ref(db,`messages/${curCh}`),snap=>{
+    const msgs=[];
+    snap.forEach(c=>msgs.push({id:c.key,...c.val()}));
     renderMessages(msgs);
-    // Ping toasts
-    if (msgs.length > lastCount) {
-      msgs.slice(lastCount).forEach(m => {
-        if (m.userId !== me.username) {
-          const pings = (m.text.match(/@([a-zA-Z0-9_]+)/g)||[]).map(x=>x.slice(1));
-          if (pings.includes(me.username))
-            toast(`📣 ${m.userId} đã nhắc đến bạn trong #${curCh}`, "ping");
+    // Ping toasts for new messages
+    if(msgs.length>lastCount){
+      msgs.slice(lastCount).forEach(m=>{
+        if(m.userId!==me.username){
+          const pings=(m.text.match(/@([a-zA-Z0-9_]+)/g)||[]).map(x=>x.slice(1));
+          if(pings.includes(me.username))
+            toast(`📣 ${m.userId} mentioned you in #${curCh}`,"ping");
         }
       });
     }
-    lastCount = msgs.length;
+    lastCount=msgs.length;
   });
 }
 
-function renderMessages(msgs) {
-  const el = document.getElementById("messages");
-  const atBot = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-  el.innerHTML = "";
-  let prevD = null, prevU = null, prevTs = 0;
-  msgs.forEach(m => {
-    const ts = m.ts || 0;
-    const dl = fmtD(ts);
-    if (dl !== prevD) {
+function renderMessages(msgs){
+  const el=document.getElementById("messages");
+  const atBot=el.scrollHeight-el.scrollTop-el.clientHeight<80;
+  el.innerHTML="";
+  let prevD=null,prevU=null,prevTs=0;
+  msgs.forEach(m=>{
+    const ts=m.ts||0, dl=fmtD(ts);
+    if(dl!==prevD){
       el.insertAdjacentHTML("beforeend",`<div class="date-div"><span>${dl}</span></div>`);
-      prevD = dl; prevU = null;
+      prevD=dl; prevU=null;
     }
-    const grouped = prevU === m.userId && ts - prevTs < 5*60000;
-    const u = allUsers[m.userId] || { username: m.userId };
-    const row = document.createElement("div");
-    row.className = "msg-row" + (grouped ? "" : " newgroup");
-    if (!grouped) {
-      row.innerHTML = `${avaHtml(u)}<div class="msg-body"><div class="msg-meta"><span class="msg-author${m.userId===me.username?" me":""}">${esc(u.username)}</span><span class="msg-time">${fmtT(ts)}</span></div><div class="msg-text">${renderText(m.text, me.username)}</div></div>`;
+    const grouped=prevU===m.userId&&ts-prevTs<5*60000;
+    const u=allUsers[m.userId]||{username:m.userId};
+    const row=document.createElement("div");
+    row.className="msg-row"+(grouped?"":" newgroup");
+    if(!grouped){
+      row.innerHTML=`${avaHtml(u)}<div class="msg-body"><div class="msg-meta"><span class="msg-author${m.userId===me.username?" me":""}">${esc(u.username)}</span><span class="msg-time">${fmtT(ts)}</span></div><div class="msg-text">${renderText(m.text,me.username)}</div></div>`;
     } else {
-      row.innerHTML = `<div class="ava-gap"></div><div class="msg-text">${renderText(m.text, me.username)}</div>`;
+      row.innerHTML=`<div class="ava-gap"></div><div class="msg-text">${renderText(m.text,me.username)}</div>`;
     }
     el.appendChild(row);
-    prevU = m.userId; prevTs = ts;
+    prevU=m.userId; prevTs=ts;
   });
-  if (!msgs.length) el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#4e5058"><div style="font-size:48px;color:#3f4147;margin-bottom:12px">#</div><div style="font-size:16px;font-weight:bold;color:#b5bac1;margin-bottom:6px">Chào mừng đến #${curCh}!</div><div style="font-size:13px">Đây là khởi đầu của kênh. Hãy gửi tin nhắn đầu tiên.</div></div>`;
-  if (atBot) el.scrollTop = el.scrollHeight;
+  if(!msgs.length) el.innerHTML=`<div style="text-align:center;padding:60px 20px;color:#4e5058"><div style="font-size:48px;color:#3f4147;margin-bottom:12px">#</div><div style="font-size:16px;font-weight:bold;color:#b5bac1;margin-bottom:6px">Welcome to #${curCh}!</div><div style="font-size:13px">This is the beginning of the #${curCh} channel. Send the first message!</div></div>`;
+  if(atBot) el.scrollTop=el.scrollHeight;
 }
 
-// ── Send ──────────────────────────────────────────────
-async function sendMsg() {
-  const inp = document.getElementById("msg-input");
-  const text = inp.value.trim();
-  if (!text) return;
-  inp.value = ""; inp.style.height = "44px";
-  document.getElementById("men-dd").style.display = "none";
-  await push(ref(db, `messages/${curCh}`), { userId: me.username, text, ts: Date.now() });
-  // Notifications
-  const pings = [...new Set((text.match(/@([a-zA-Z0-9_]+)/g)||[]).map(x=>x.slice(1)))];
-  for (const uname of pings) {
-    if (uname === me.username || !allUsers[uname]) continue;
-    await push(ref(db, `notifs/${uname}`), { from: me.username, text: text.slice(0,80), channel: curCh, ts: Date.now(), read: false });
+// ── Send message ──────────────────────────────────────
+async function sendMsg(){
+  const inp=document.getElementById("msg-input");
+  const text=inp.value.trim();
+  if(!text) return;
+  inp.value=""; inp.style.height="44px";
+  document.getElementById("men-dd").style.display="none";
+  await push(ref(db,`messages/${curCh}`),{userId:me.username,text,ts:Date.now()});
+  // Notify pinged users
+  const pings=[...new Set((text.match(/@([a-zA-Z0-9_]+)/g)||[]).map(x=>x.slice(1)))];
+  for(const uname of pings){
+    if(uname===me.username||!allUsers[uname]) continue;
+    await push(ref(db,`notifs/${uname}`),{from:me.username,text:text.slice(0,80),channel:curCh,ts:Date.now(),read:false});
   }
 }
-document.getElementById("send-btn").onclick = sendMsg;
-document.getElementById("msg-input").addEventListener("keydown", e => {
-  if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+document.getElementById("send-btn").onclick=sendMsg;
+document.getElementById("msg-input").addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMsg();}
 });
-document.getElementById("msg-input").addEventListener("input", function() {
+document.getElementById("msg-input").addEventListener("input",function(){
   this.style.height="auto"; this.style.height=Math.min(this.scrollHeight,120)+"px";
   doMentionDD(this);
 });
 
 // ── Mention autocomplete ──────────────────────────────
-function doMentionDD(inp) {
-  const val=inp.value, cur=inp.selectionStart;
+function doMentionDD(inp){
+  const val=inp.value,cur=inp.selectionStart;
   const m=val.slice(0,cur).match(/@([a-zA-Z0-9_]*)$/);
   const dd=document.getElementById("men-dd");
-  if (!m){dd.style.display="none";return;}
+  if(!m){dd.style.display="none";return;}
   const q=m[1].toLowerCase();
   const hits=Object.keys(allUsers).filter(n=>n.toLowerCase().startsWith(q)&&n!==me.username).slice(0,6);
-  if (!hits.length){dd.style.display="none";return;}
+  if(!hits.length){dd.style.display="none";return;}
   dd.innerHTML=hits.map(n=>`<div class="men-opt" data-u="${n}">${avaHtml(allUsers[n]||{username:n},26)}<span class="mn"><b>@</b>${n}</span></div>`).join("");
   dd.style.display="";
   dd.querySelectorAll(".men-opt").forEach(opt=>opt.addEventListener("mousedown",e=>{
@@ -533,8 +544,8 @@ function doMentionDD(inp) {
 }
 
 // ── Notifications ─────────────────────────────────────
-function listenNotifs() {
-  onValue(ref(db,`notifs/${me.username}`), snap => {
+function listenNotifs(){
+  onValue(ref(db,`notifs/${me.username}`),snap=>{
     const list=[]; snap.forEach(c=>list.push({id:c.key,...c.val()}));
     list.sort((a,b)=>b.ts-a.ts);
     const unread=list.filter(n=>!n.read).length;
@@ -543,12 +554,12 @@ function listenNotifs() {
     renderNotifs(list);
   });
 }
-function renderNotifs(list) {
+function renderNotifs(list){
   const el=document.getElementById("notif-list");
-  if (!list.length){el.innerHTML=`<div class="ni-empty">Không có thông báo nào</div>`;return;}
+  if(!list.length){el.innerHTML=`<div class="ni-empty">No notifications yet</div>`;return;}
   el.innerHTML=list.slice(0,30).map(n=>`
     <div class="ni${n.read?"":" unread"}" data-id="${n.id}" data-ch="${n.channel}">
-      <div class="ni-from">📣 ${esc(n.from)} đã nhắc đến bạn</div>
+      <div class="ni-from">📣 ${esc(n.from)} mentioned you</div>
       <div class="ni-text">${esc(n.text)}</div>
       <div class="ni-meta">#${n.channel} · ${fmtT(n.ts)}</div>
     </div>`).join("");
@@ -564,30 +575,30 @@ document.getElementById("notif-btn").onclick=()=>{
   const p=document.getElementById("notif-panel");
   const opening=p.style.display==="none"||!p.style.display;
   p.style.display=opening?"":"none";
-  if (opening) {
+  if(opening){
     onValue(ref(db,`notifs/${me.username}`),snap=>{
-      snap.forEach(c=>{if(!c.val().read)set(ref(db,`notifs/${me.username}/${c.key}/read`),true);});
+      snap.forEach(c=>{if(!c.val().read) set(ref(db,`notifs/${me.username}/${c.key}/read`),true);});
     },{onlyOnce:true});
   }
 };
 
 // ── Profile ───────────────────────────────────────────
-function openProfile() {
-  const u = allUsers[me.username] || me;
-  mkAva(u, document.getElementById("big-ava"), 80);
-  document.getElementById("prof-uname").value = me.username;
-  document.getElementById("prof-bio").value   = u.bio || "";
-  document.getElementById("del-ava").style.display = u.avatar ? "" : "none";
-  newAvaData = null; removeAvaFlag = false;
-  document.getElementById("prof-modal").style.display = "flex";
+function openProfile(){
+  const u=allUsers[me.username]||me;
+  applyAva(u, document.getElementById("big-ava"), 80);
+  document.getElementById("prof-uname").value=me.username;
+  document.getElementById("prof-bio").value=u.bio||"";
+  document.getElementById("del-ava").style.display=u.avatar?"":"none";
+  newAvaData=null; removeAvaFlag=false;
+  document.getElementById("prof-modal").style.display="flex";
 }
-document.getElementById("prof-btn").onclick = openProfile;
-document.getElementById("my-ava").onclick   = openProfile;
-document.getElementById("big-ava").onclick  = () => document.getElementById("ava-file").click();
-document.getElementById("pick-ava").onclick = () => document.getElementById("ava-file").click();
-document.getElementById("ava-file").addEventListener("change", function() {
-  const f=this.files[0]; if (!f) return;
-  if (f.size>2*1024*1024){alert("Ảnh phải nhỏ hơn 2MB");return;}
+document.getElementById("prof-btn").onclick=openProfile;
+document.getElementById("my-ava").onclick=openProfile;
+document.getElementById("big-ava").onclick=()=>document.getElementById("ava-file").click();
+document.getElementById("pick-ava").onclick=()=>document.getElementById("ava-file").click();
+document.getElementById("ava-file").addEventListener("change",function(){
+  const f=this.files[0]; if(!f) return;
+  if(f.size>2*1024*1024){alert("Image must be under 2MB");return;}
   const rd=new FileReader(); rd.onload=e=>{
     newAvaData=e.target.result; removeAvaFlag=false;
     const el=document.getElementById("big-ava");
@@ -597,19 +608,20 @@ document.getElementById("ava-file").addEventListener("change", function() {
 });
 document.getElementById("del-ava").onclick=()=>{
   newAvaData=null; removeAvaFlag=true;
-  mkAva(allUsers[me.username]||{...me,avatar:""}, document.getElementById("big-ava"), 80);
+  applyAva({...(allUsers[me.username]||me),avatar:""}, document.getElementById("big-ava"), 80);
   document.getElementById("del-ava").style.display="none";
 };
 document.getElementById("prof-cancel").onclick=()=>document.getElementById("prof-modal").style.display="none";
 document.getElementById("prof-save").onclick=async()=>{
-  const bio   = document.getElementById("prof-bio").value.trim();
-  const curAva= (allUsers[me.username]||me).avatar||"";
-  const avatar= removeAvaFlag?"": (newAvaData||curAva);
+  const bio=document.getElementById("prof-bio").value.trim();
+  const curAva=(allUsers[me.username]||me).avatar||"";
+  const avatar=removeAvaFlag?"":(newAvaData||curAva);
   await set(ref(db,`users/${me.username}/avatar`),avatar);
   await set(ref(db,`users/${me.username}/bio`),bio);
-  me.avatar=avatar; me.bio=bio; refreshMyAva();
+  me.avatar=avatar; me.bio=bio;
+  applyAva(allUsers[me.username]||me, document.getElementById("my-ava"), 32);
   document.getElementById("prof-modal").style.display="none";
-  toast("✓ Đã lưu hồ sơ");
+  toast("✓ Profile saved");
 };
 
 // ── Logout ────────────────────────────────────────────
@@ -618,13 +630,13 @@ document.getElementById("logout-btn").onclick=async()=>{
   location.reload();
 };
 
-// ── Click outside ─────────────────────────────────────
+// ── Click outside to close panels ────────────────────
 document.addEventListener("click",e=>{
-  if (!e.target.closest("#notif-btn")&&!e.target.closest("#notif-panel"))
+  if(!e.target.closest("#notif-btn")&&!e.target.closest("#notif-panel"))
     document.getElementById("notif-panel").style.display="none";
-  if (!e.target.closest("#msg-input")&&!e.target.closest("#men-dd"))
+  if(!e.target.closest("#msg-input")&&!e.target.closest("#men-dd"))
     document.getElementById("men-dd").style.display="none";
-  if (e.target===document.getElementById("prof-modal"))
+  if(e.target===document.getElementById("prof-modal"))
     document.getElementById("prof-modal").style.display="none";
 });
 </script>
