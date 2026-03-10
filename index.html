@@ -161,14 +161,14 @@ input,textarea,button{font-family:inherit}
 .nav-tab:hover{color:#aaa}
 .nav-tab.active{color:#5b5ef4;border-bottom-color:#5b5ef4}
 #sidebar-list{flex:1;overflow-y:auto}
-#sidebar-footer{border-top:1px solid #26272c;padding:10px 12px;display:flex;align-items:center;gap:8px}
+#sidebar-footer{border-top:1px solid #26272c;padding:10px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0}
 #me-ava{width:34px;height:34px;border-radius:50%;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;color:#fff;overflow:hidden}
 #me-ava img{width:100%;height:100%;object-fit:cover}
 #me-info{flex:1;min-width:0}
 #me-name{font-size:13px;font-weight:bold;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #me-status{font-size:11px;color:#444}
-#settings-btn{background:none;border:none;color:#555;cursor:pointer;font-size:18px;padding:5px;border-radius:5px}
-#settings-btn:hover{background:rgba(255,255,255,.07);color:#aaa}
+#settings-btn{background:rgba(255,255,255,.07);border:1px solid #2e2f34;color:#ccc;cursor:pointer;font-size:16px;padding:6px 8px;border-radius:7px;line-height:1}
+#settings-btn:hover{background:rgba(255,255,255,.13);color:#fff}
 
 /* Sidebar list items */
 .list-item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-radius:6px;margin:2px 8px;transition:background .1s;position:relative}
@@ -264,20 +264,21 @@ input,textarea,button{font-family:inherit}
 #add-friend-view{display:none;flex-direction:column;height:100%}
 #add-friend-top{height:52px;border-bottom:1px solid #26272c;display:flex;align-items:center;padding:0 20px;flex-shrink:0}
 #add-friend-top span{font-weight:bold;font-size:16px;color:#fff}
-#add-friend-body{padding:28px}
-#add-friend-body p{color:#666;font-size:13px;margin-bottom:16px}
-#add-search-wrap{display:flex;gap:10px;margin-bottom:24px}
-#add-search{flex:1;padding:10px 12px;background:#26272c;border:1px solid #2e2f34;border-radius:6px;color:#e0e0e0;font-size:14px;outline:none}
-#add-search:focus{border-color:#5b5ef4}
-#add-search-btn{background:#5b5ef4;color:#fff;border:none;border-radius:6px;padding:10px 18px;font-size:14px;cursor:pointer;font-weight:bold}
-#add-search-btn:hover{background:#4a4dd6}
-#add-result{color:#888;font-size:13px}
-.user-result{display:flex;align-items:center;gap:12px;padding:12px;background:#1e1f23;border-radius:8px;margin-top:10px}
-.user-result .item-name{font-size:14px;font-weight:bold;color:#fff;flex:1}
-.user-result .item-sub{font-size:12px;color:#555}
-.send-req-btn{background:#5b5ef4;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:bold;flex-shrink:0}
-.send-req-btn:hover{background:#4a4dd6}
-.send-req-btn:disabled{background:#333;color:#555;cursor:not-allowed}
+#add-friend-body{padding:20px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+#add-search-wrap{position:relative}
+#add-search{width:100%;padding:10px 14px;background:#26272c;border:1px solid #2e2f34;border-radius:8px;color:#e0e0e0;font-size:14px;outline:none;font-family:inherit}
+#add-search:focus{border-color:#7c6cf8}
+#add-result{display:flex;flex-direction:column;gap:6px}
+.user-result{display:flex;align-items:center;gap:12px;padding:11px 14px;background:#1e1f23;border-radius:8px;border:1px solid #26272c}
+.user-result:hover{border-color:#2e2f34;background:#222327}
+.user-result .ur-info{flex:1;min-width:0}
+.user-result .ur-name{font-size:14px;font-weight:bold;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-result .ur-sub{font-size:12px;color:#555;margin-top:1px}
+.send-req-btn{background:#7c6cf8;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:bold;flex-shrink:0}
+.send-req-btn:hover{background:#6558e0}
+.send-req-btn:disabled{background:#2e2f34;color:#555;cursor:not-allowed}
+.send-req-btn.friends{background:#3ba55d}
+.send-req-btn.pending{background:#333;color:#888}
 
 /* Toast */
 #toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:999;pointer-events:none}
@@ -393,10 +394,8 @@ input,textarea,button{font-family:inherit}
     <div id="add-friend-view">
       <div id="add-friend-top"><span>Add Friend</span></div>
       <div id="add-friend-body">
-        <p>Search by exact username to send a friend request.</p>
         <div id="add-search-wrap">
-          <input id="add-search" placeholder="Enter username...">
-          <button id="add-search-btn">Search</button>
+          <input id="add-search" placeholder="🔍  Search by username or display name...">
         </div>
         <div id="add-result"></div>
       </div>
@@ -866,46 +865,51 @@ document.getElementById("chat-input").addEventListener("input",function(){
 window.openAddFriend=function(){
   showView("add-friend");
   document.getElementById("add-search").value="";
-  document.getElementById("add-result").innerHTML="";
   openChat=null;
   renderSidebar();
+  renderAllUsers("");
 };
 
-document.getElementById("add-search-btn").onclick=searchUser;
-document.getElementById("add-search").addEventListener("keydown",e=>{if(e.key==="Enter")searchUser();});
+document.getElementById("add-search").addEventListener("input",function(){
+  renderAllUsers(this.value.toLowerCase().trim());
+});
 
-async function searchUser(){
-  const q=document.getElementById("add-search").value.trim().replace(/[^a-zA-Z0-9_]/g,"");
+function renderAllUsers(filter){
   const res=document.getElementById("add-result");
-  if(!q){res.textContent="Enter a username.";return;}
-  if(q===ME.username){res.textContent="That's you!";return;}
-  res.textContent="Searching...";
-  const snap=await get(ref(db,`users/${q}`));
-  if(!snap.exists()){res.textContent=`No user found with username "${q}".`;return;}
-  const u=snap.val();
-  const isFriend=!!myFriends[q];
-  const isPendingOut=!!pendingOut[q];
-  const isPendingIn=!!pendingIn[q];
-  let btn="";
-  if(isFriend) btn=`<button class="send-req-btn" disabled>Already friends</button>`;
-  else if(isPendingOut) btn=`<button class="send-req-btn" disabled>Request sent</button>`;
-  else if(isPendingIn) btn=`<button class="send-req-btn" onclick="acceptFriend('${q}')">Accept Request</button>`;
-  else btn=`<button class="send-req-btn" onclick="sendRequest('${q}')">Send Request</button>`;
-  res.innerHTML=`<div class="user-result">
-    ${avaHtml(u,44)}
-    <div style="flex:1">
-      <div class="item-name">${esc(dispName(u))}</div>
-      <div class="item-sub">@${esc(u.username)}</div>
-    </div>
-    ${btn}
-  </div>`;
+  const users=Object.values(allUsers).filter(u=>{
+    if(u.username===ME.username)return false;
+    if(!filter)return true;
+    return u.username.toLowerCase().includes(filter)||(u.displayName||"").toLowerCase().includes(filter);
+  });
+  if(!users.length){
+    res.innerHTML=`<div style="text-align:center;padding:32px;color:#444;font-size:13px">${filter?"No users found matching \""+filter+"\"":'No other users yet.'}</div>`;
+    return;
+  }
+  res.innerHTML=users.map(u=>{
+    const isFriend=!!myFriends[u.username];
+    const isPendingOut=!!pendingOut[u.username];
+    const isPendingIn=!!pendingIn[u.username];
+    let btn="";
+    if(isFriend) btn=`<button class="send-req-btn friends" disabled>✓ Friends</button>`;
+    else if(isPendingOut) btn=`<button class="send-req-btn pending" disabled>Pending...</button>`;
+    else if(isPendingIn) btn=`<button class="send-req-btn" onclick="acceptFriend('${u.username}')">Accept</button>`;
+    else btn=`<button class="send-req-btn" onclick="sendRequest('${u.username}')">Add Friend</button>`;
+    return `<div class="user-result">
+      ${avaHtml(u,40)}
+      <div class="ur-info">
+        <div class="ur-name">${esc(dispName(u))}</div>
+        <div class="ur-sub">@${esc(u.username)}</div>
+      </div>
+      ${btn}
+    </div>`;
+  }).join("");
 }
 
 window.sendRequest=async function(to){
   await set(ref(db,`friends/${ME.username}/${to}`),{status:"pending_out",ts:Date.now()});
   await set(ref(db,`friends/${to}/${ME.username}`),{status:"pending_in",ts:Date.now()});
   toast("Friend request sent!","ok");
-  searchUser();
+  renderAllUsers(document.getElementById("add-search").value.toLowerCase().trim());
 };
 window.acceptFriend=async function(from){
   await set(ref(db,`friends/${ME.username}/${from}`),{status:"friends",since:Date.now()});
