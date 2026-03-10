@@ -406,25 +406,55 @@ input,textarea,button{font-family:inherit}
     <div id="settings-view">
       <div id="settings-top"><span>⚙️ Settings</span></div>
       <div id="settings-body">
+
+        <!-- Avatar -->
         <div class="settings-section">
-          <h3>Profile</h3>
+          <h3>Profile Photo</h3>
           <div class="ava-row">
-            <div id="settings-big-ava" title="Click to change"></div>
+            <div id="settings-big-ava" title="Click to change photo" style="cursor:pointer"></div>
             <div class="ava-change-col">
+              <p style="font-size:13px;color:#555;margin-bottom:8px">Upload a real photo from your device.<br>Max 2MB.</p>
               <button class="btn-sm" id="pick-ava-btn">📁 Choose Photo</button>
-              <button class="btn-sm danger" id="del-ava-btn" style="display:none">Remove Photo</button>
+              <button class="btn-sm danger" id="del-ava-btn" style="display:none">✕ Remove Photo</button>
             </div>
             <input id="ava-file" type="file" accept="image/*" style="display:none">
           </div>
-          <div class="sf"><label>Username</label><input id="s-username" disabled></div>
-          <div class="sf"><label>Display Name</label><input id="s-displayname" maxlength="30" placeholder="Optional display name"></div>
-          <div class="sf"><label>Bio</label><textarea id="s-bio" maxlength="150" placeholder="Tell people about yourself..."></textarea></div>
-          <button class="btn-save" id="save-profile-btn">Save Changes</button>
         </div>
+
+        <!-- Display name + bio -->
+        <div class="settings-section">
+          <h3>Display Info</h3>
+          <div class="sf">
+            <label>Username <span style="color:#444;font-size:11px;text-transform:none;letter-spacing:0">(cannot be changed)</span></label>
+            <input id="s-username" disabled>
+          </div>
+          <div class="sf">
+            <label>Display Name</label>
+            <input id="s-displayname" maxlength="30" placeholder="How others see your name">
+          </div>
+          <div class="sf">
+            <label>Bio</label>
+            <textarea id="s-bio" maxlength="150" placeholder="Tell people about yourself..."></textarea>
+          </div>
+          <button class="btn-save" id="save-profile-btn">Save Profile</button>
+        </div>
+
+        <!-- Change password -->
+        <div class="settings-section">
+          <h3>Change Password</h3>
+          <div class="sf"><label>Current Password</label><input type="password" id="s-cur-pw" placeholder="Enter current password"></div>
+          <div class="sf"><label>New Password</label><input type="password" id="s-new-pw" placeholder="At least 4 characters"></div>
+          <div class="sf"><label>Confirm New Password</label><input type="password" id="s-confirm-pw" placeholder="Re-enter new password"></div>
+          <div id="pw-err" style="color:#f87171;font-size:13px;margin-bottom:12px;display:none;background:rgba(248,113,113,.08);padding:8px 12px;border-radius:6px;border-left:3px solid #ef4444"></div>
+          <button class="btn-save" id="save-pw-btn">Update Password</button>
+        </div>
+
+        <!-- Logout -->
         <div class="settings-section">
           <h3>Account</h3>
-          <button class="btn-logout" id="logout-btn">Log Out</button>
+          <button class="btn-logout" id="logout-btn">🚪 Log Out</button>
         </div>
+
       </div>
     </div>
   </div>
@@ -884,7 +914,6 @@ window.removeFriend=async function(username){
   toast("Friend removed.");
 };
 
-// ── Settings ──────────────────────────────────────────
 function openSettings(){
   showView("settings");
   openChat=null;
@@ -895,6 +924,11 @@ function openSettings(){
   document.getElementById("s-displayname").value=u.displayName||"";
   document.getElementById("s-bio").value=u.bio||"";
   document.getElementById("del-ava-btn").style.display=u.avatar?"":"none";
+  // Clear password fields
+  document.getElementById("s-cur-pw").value="";
+  document.getElementById("s-new-pw").value="";
+  document.getElementById("s-confirm-pw").value="";
+  document.getElementById("pw-err").style.display="none";
   newAva=null;removeAva=false;
 }
 document.getElementById("settings-btn").onclick=openSettings;
@@ -925,6 +959,28 @@ document.getElementById("save-profile-btn").onclick=async()=>{
   applyAva(allUsers[ME.username]||ME,document.getElementById("me-ava"),34);
   document.getElementById("me-name").textContent=dispName(ME);
   toast("Profile saved!","ok");
+};
+
+// Change password
+document.getElementById("save-pw-btn").onclick=async()=>{
+  const curPw=document.getElementById("s-cur-pw").value;
+  const newPw=document.getElementById("s-new-pw").value;
+  const confirmPw=document.getElementById("s-confirm-pw").value;
+  const errEl=document.getElementById("pw-err");
+  function showPwErr(msg){errEl.textContent=msg;errEl.style.display="";}
+  errEl.style.display="none";
+  if(!curPw||!newPw||!confirmPw)return showPwErr("Please fill in all fields.");
+  if(newPw.length<4)return showPwErr("New password must be at least 4 characters.");
+  if(newPw!==confirmPw)return showPwErr("New passwords do not match.");
+  // Verify current password
+  const snap=await get(ref(db,`users/${ME.username}/password`));
+  if(!snap.exists()||snap.val()!==hashPw(curPw))return showPwErr("Current password is incorrect.");
+  await set(ref(db,`users/${ME.username}/password`),hashPw(newPw));
+  ME={...ME,password:hashPw(newPw)};
+  document.getElementById("s-cur-pw").value="";
+  document.getElementById("s-new-pw").value="";
+  document.getElementById("s-confirm-pw").value="";
+  toast("Password updated!","ok");
 };
 
 async function doLogout(){
